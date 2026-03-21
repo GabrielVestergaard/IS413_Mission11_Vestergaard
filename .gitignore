@@ -1,0 +1,17 @@
+# Node
+/node_modules
+
+dist
+build
+
+# .NET
+bin/
+obj/
+.vs/
+
+# IDEs
+.idea/
+.vscode/
+
+# Logs
+*.log
