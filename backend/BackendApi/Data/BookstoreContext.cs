@@ -1,3 +1,4 @@
+// EF Core DbContext: exposes the Books table mapped to Bookstore.sqlite.
 using BackendApi.Models;
 using Microsoft.EntityFrameworkCore;
 

@@ -19,6 +19,7 @@ builder.Services.AddSwaggerGen();
 // Build the path to Bookstore.sqlite, which lives two directories above the
 // backend project (at the repository root alongside the frontend folder).
 // Path.Combine handles OS-specific path separators automatically.
+// Assumes the process working directory is the BackendApi project folder (normal for `dotnet run` here).
 var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Bookstore.sqlite");
 
 // Register BookstoreContext with Entity Framework Core using the SQLite provider.

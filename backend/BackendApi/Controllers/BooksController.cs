@@ -1,3 +1,4 @@
+// Books API: category list + paginated, filterable book queries (EF Core + SQLite).
 using BackendApi.Data;
 using BackendApi.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -29,22 +30,49 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
-    /// Returns a paginated, optionally sorted page of books.
+    /// Returns all distinct book categories sorted alphabetically.
+    /// Used by the frontend to populate the category filter sidebar.
     ///
-    /// Example request: GET /api/books?page=2&amp;pageSize=5&amp;sortBy=title
+    /// Example request: GET /api/books/categories
+    /// </summary>
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var categories = await _context.Books
+            .Select(b => b.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
+
+        return Ok(categories);
+    }
+
+    /// <summary>
+    /// Returns a paginated, optionally sorted and filtered page of books.
+    ///
+    /// Example request: GET /api/books?page=2&amp;pageSize=5&amp;sortBy=title&amp;category=Biography
     /// </summary>
     /// <param name="page">1-based page number (default 1).</param>
     /// <param name="pageSize">How many books to return per page (default 5).</param>
     /// <param name="sortBy">Column to sort by: "title" or "default" (insertion order).</param>
+    /// <param name="category">Optional category filter. Empty string or omitted means all categories.</param>
     [HttpGet]
     public async Task<IActionResult> GetBooks(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 5,
-        [FromQuery] string sortBy = "title")
+        [FromQuery] string sortBy = "title",
+        [FromQuery] string category = "")
     {
         // Start with the full Books table as an IQueryable.
         // Nothing hits the database yet — LINQ builds up a query expression tree.
         var query = _context.Books.AsQueryable();
+
+        // Apply category filter if one was provided.
+        // String.IsNullOrWhiteSpace handles empty string, null, and whitespace-only values.
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(b => b.Category == category);
+        }
 
         // Apply the requested sort order using a C# switch expression.
         // "title"   → alphabetical A–Z by Title
@@ -76,6 +104,7 @@ public class BooksController : ControllerBase
             totalBooks,
             page,
             pageSize,
+            category,
             // Math.Ceiling ensures a partial last page still counts as a full page.
             // e.g. 16 books / 5 per page = 3.2 → ceiling → 4 pages
             totalPages = (int)Math.Ceiling((double)totalBooks / pageSize)
