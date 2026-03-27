@@ -1,31 +1,90 @@
 /**
- * App.tsx — the root component of the React application.
+ * App.tsx — root component of the React application.
  *
- * This is the top-level component that React renders into the <div id="root">
- * element defined in index.html. It provides the overall page layout
- * (navbar + content area) and mounts the BookList component.
+ * Sets up:
+ *  - CartProvider  : wraps the whole app so any component can read/write
+ *                    the shopping cart without prop-drilling.
+ *  - React Router  : <Routes> maps URL paths to page components.
+ *      /      → BookList (the catalog page)
+ *      /cart  → Cart (the shopping cart page)
+ *  - Navbar        : always visible at the top; shows a live cart badge.
  */
-import BookList from './components/BookList';
 
-export default function App(): JSX.Element {
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { CartProvider, useCart } from './context/CartContext';
+import BookList from './components/BookList';
+import Cart from './components/Cart';
+
+// ── Inner layout component ───────────────────────────────────────────────────
+// Separated from App so it can call useCart() (which requires being inside
+// CartProvider) and useNavigate() (which requires being inside Router).
+function Layout(): JSX.Element {
+  const { totalItems, catalogBrowseState } = useCart();
+  const navigate = useNavigate();
+
   return (
-    // min-vh-100 makes the page at least as tall as the viewport.
-    // bg-light gives the content area a light grey Bootstrap background.
     <div className="min-vh-100 bg-light">
 
-      {/* Bootstrap dark navbar — sits at the top of every page */}
-      <nav className="navbar navbar-dark bg-dark mb-2">
-        <div className="container">
-          <span className="navbar-brand fw-bold">📖 Online Bookstore</span>
+      {/* Top bar: brand + cart. Cart passes the same router `state` shape as
+          BookList's "View Cart" so Continue Shopping works from here too. */}
+      <nav className="navbar navbar-dark bg-dark mb-2 shadow">
+        <div className="container-xl">
+
+          {/* Brand / home link */}
+          <Link className="navbar-brand fw-bold" to="/">
+            📖 Online Bookstore
+          </Link>
+
+          {/* Cart: badge shows total line-item count; click forwards browse snapshot */}
+          <button
+            className="btn btn-outline-light btn-sm position-relative"
+            onClick={() =>
+              navigate('/cart', {
+                state: {
+                  returnPage: catalogBrowseState.page,
+                  returnCategory: catalogBrowseState.category,
+                  returnPageSize: catalogBrowseState.pageSize,
+                  returnSortBy: catalogBrowseState.sortBy,
+                },
+              })
+            }
+            aria-label="View shopping cart"
+          >
+            🛒 Cart
+            {totalItems > 0 && (
+              // Bootstrap badge positioned over the cart button.
+              // position-absolute + translate-middle gives the pill badge
+              // the classic "notification bubble" look on the button corner.
+              <span
+                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style={{ fontSize: '0.65rem' }}
+              >
+                {totalItems}
+                <span className="visually-hidden">items in cart</span>
+              </span>
+            )}
+          </button>
+
         </div>
       </nav>
 
-      {/*
-        BookList handles all book-fetching, display, pagination, and sorting.
-        Placing it here makes it the sole content of the page, as required.
-      */}
-      <BookList />
+      {/* ── Page content — swapped by the router ─────────────────────────── */}
+      <Routes>
+        <Route path="/" element={<BookList />} />
+        <Route path="/cart" element={<Cart />} />
+      </Routes>
 
     </div>
+  );
+}
+
+// ── Root App component ───────────────────────────────────────────────────────
+// BrowserRouter is mounted one level up in index.tsx, so we only need
+// CartProvider here.
+export default function App(): JSX.Element {
+  return (
+    <CartProvider>
+      <Layout />
+    </CartProvider>
   );
 }
