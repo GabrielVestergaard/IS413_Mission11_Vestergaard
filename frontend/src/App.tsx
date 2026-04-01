@@ -14,6 +14,7 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { CartProvider, useCart } from './context/CartContext';
 import BookList from './components/BookList';
 import Cart from './components/Cart';
+import AdminBooks from './components/AdminBooks';
 
 // ── Inner layout component ───────────────────────────────────────────────────
 // Separated from App so it can call useCart() (which requires being inside
@@ -33,6 +34,11 @@ function Layout(): JSX.Element {
           {/* Brand / home link */}
           <Link className="navbar-brand fw-bold" to="/">
             📖 Online Bookstore
+          </Link>
+
+          {/* Admin link — navigates to the book management page */}
+          <Link className="btn btn-outline-light btn-sm me-2" to="/adminbooks">
+            ⚙️ Admin
           </Link>
 
           {/* Cart: badge shows total line-item count; click forwards browse snapshot */}
@@ -70,8 +76,10 @@ function Layout(): JSX.Element {
 
       {/* ── Page content — swapped by the router ─────────────────────────── */}
       <Routes>
-        <Route path="/" element={<BookList />} />
-        <Route path="/cart" element={<Cart />} />
+        <Route path="/"           element={<BookList />} />
+        <Route path="/cart"       element={<Cart />} />
+        {/* Admin route — TAs and instructors navigate here to manage the catalog */}
+        <Route path="/adminbooks" element={<AdminBooks />} />
       </Routes>
 
     </div>
