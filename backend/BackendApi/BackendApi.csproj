@@ -16,4 +16,12 @@
   <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.0" />
   </ItemGroup>
 
+  <!-- Ensure the SQLite DB is included in publish output -->
+  <ItemGroup>
+    <Content Include="Bookstore.sqlite">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

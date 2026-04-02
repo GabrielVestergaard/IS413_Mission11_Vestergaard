@@ -16,11 +16,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Build the path to Bookstore.sqlite, which lives two directories above the
-// backend project (at the repository root alongside the frontend folder).
-// Path.Combine handles OS-specific path separators automatically.
-// Assumes the process working directory is the BackendApi project folder (normal for `dotnet run` here).
-var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Bookstore.sqlite");
+// Build the path to Bookstore.sqlite inside the BackendApi project folder.
+// This works for both running from the project folder and when published.
+// For published apps AppContext.BaseDirectory points to the publish folder.
+var possiblePublishedPath = Path.Combine(AppContext.BaseDirectory, "Bookstore.sqlite");
+var devPath = Path.Combine(Directory.GetCurrentDirectory(), "Bookstore.sqlite");
+
+string dbPath;
+if (File.Exists(possiblePublishedPath))
+{
+    dbPath = possiblePublishedPath;
+}
+else if (File.Exists(devPath))
+{
+    dbPath = devPath;
+}
+else
+{
+    // Fall back to the project-relative path to be tolerant during development.
+    dbPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Bookstore.sqlite");
+}
 
 // Register BookstoreContext with Entity Framework Core using the SQLite provider.
 // AddDbContext makes it available for constructor injection throughout the app.
