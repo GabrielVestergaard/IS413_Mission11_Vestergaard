@@ -88,7 +88,7 @@ export default function AdminBooks(): JSX.Element {
 
   // ── Load categories once on mount ────────────────────────────────────────────
   useEffect(() => {
-    fetch(`${API_BASE}/books/categories`)
+  fetch(`${API_BASE}/categories`)
       .then((res) => res.json() as Promise<string[]>)
       .then((cats) => {
         setCategories(cats);
@@ -105,7 +105,7 @@ export default function AdminBooks(): JSX.Element {
     setLoading(true);
     setListError(null);
 
-  fetch(`${API_BASE}/books?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
+  fetch(`${API_BASE}?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         return res.json() as Promise<BooksResponse>;
@@ -218,7 +218,7 @@ export default function AdminBooks(): JSX.Element {
     };
 
     // Choose POST for new books, PUT for edits.
-  const url    = editingBook ? `${API_BASE}/books/${editingBook.bookID}` : `${API_BASE}/books`;
+  const url    = editingBook ? `${API_BASE}/${editingBook.bookID}` : `${API_BASE}`;
     const method = editingBook ? 'PUT' : 'POST';
 
     try {
@@ -255,7 +255,7 @@ export default function AdminBooks(): JSX.Element {
     if (!deletingBook) return;
 
     try {
-  const res = await fetch(`${API_BASE}/books/${deletingBook.bookID}`, {
+  const res = await fetch(`${API_BASE}/${deletingBook.bookID}`, {
         method: 'DELETE',
       });
 

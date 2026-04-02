@@ -133,7 +133,7 @@ export default function BookList(): JSX.Element {
 
   // ── Load categories once on mount ─────────────────────────────────────────
   useEffect(() => {
-    fetch(`${API_BASE}/books/categories`)
+  fetch(`${API_BASE}/categories`)
       .then((res) => res.json() as Promise<string[]>)
       .then(setCategories)
       .catch(() => {/* silently ignore — categories are non-critical */});
@@ -152,7 +152,7 @@ export default function BookList(): JSX.Element {
     });
     if (selectedCategory) params.set('category', selectedCategory);
 
-  fetch(`${API_BASE}/books?${params.toString()}`)
+  fetch(`${API_BASE}?${params.toString()}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         return res.json() as Promise<BooksResponse>;
