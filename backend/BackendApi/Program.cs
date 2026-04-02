@@ -3,6 +3,7 @@
 
 using BackendApi.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 // WebApplication.CreateBuilder sets up configuration (appsettings.json, env vars, etc.)
 // and prepares the dependency injection container.
@@ -51,14 +52,33 @@ builder.Services.AddDbContext<BookstoreContext>(options =>
 // CORS (Cross-Origin Resource Sharing) policy.
 // Browsers block requests from one origin (e.g. localhost:5173) to another
 // (e.g. localhost:5000) by default. This tells the browser our API allows it.
+// Configure CORS origins. Use the FRONTEND_ORIGINS environment variable
+// (comma-separated) in production to list allowed origins, e.g.
+// FRONTEND_ORIGINS=https://your-frontend.azurewebsites.net
+var frontendOriginsEnv = builder.Configuration["FRONTEND_ORIGINS"] ?? Environment.GetEnvironmentVariable("FRONTEND_ORIGINS") ?? string.Empty;
+string[] frontendOrigins = string.IsNullOrWhiteSpace(frontendOriginsEnv)
+    ? new[] { "http://localhost:5173" }
+    : frontendOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy
-            .WithOrigins("http://localhost:5173") // Vite dev server origin
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        // If running in Production and no FRONTEND_ORIGINS were provided,
+        // allow any origin temporarily so deployed frontends can talk to the API
+        // while you set the environment variable in Azure. This avoids a
+        // blank page due to CORS blocking. Log a warning so it's obvious.
+        if (builder.Environment.IsProduction() && frontendOrigins.Length == 1 && frontendOrigins[0] == "http://localhost:5173")
+        {
+            Console.Error.WriteLine("WARNING: No FRONTEND_ORIGINS configured and running in Production — allowing any origin temporarily.");
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        }
+        else
+        {
+            policy.WithOrigins(frontendOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
     });
 });
 
