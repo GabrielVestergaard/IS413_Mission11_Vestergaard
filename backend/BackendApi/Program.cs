@@ -16,14 +16,35 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Build the path to Bookstore.sqlite, which lives two directories above the
-// backend project (at the repository root alongside the frontend folder).
-// Path.Combine handles OS-specific path separators automatically.
-// Assumes the process working directory is the BackendApi project folder (normal for `dotnet run` here).
-var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Bookstore.sqlite");
+// Determine a reliable path for the SQLite database that works both when
+// running via `dotnet run` from the project folder and when the app is
+// published and executed from the publish output directory.
+// - When published the assembly files live in AppContext.BaseDirectory,
+//   so we look there first. Otherwise fall back to the repo-relative path
+//   used during development (two levels up from the project folder).
+var baseDir = AppContext.BaseDirectory;
+var publishedPath = Path.Combine(baseDir, "Bookstore.sqlite");
+var devPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Bookstore.sqlite");
+
+string dbPath;
+if (File.Exists(publishedPath))
+{
+    dbPath = publishedPath;
+}
+else if (File.Exists(devPath))
+{
+    dbPath = devPath;
+}
+else
+{
+    // Log a clear message and throw so the host sees a helpful startup error
+    // instead of a vague HTTP 500 later when a controller tries to use the DB.
+    var msg = $"Bookstore.sqlite not found. Checked: {publishedPath} and {devPath}.";
+    Console.Error.WriteLine(msg);
+    throw new FileNotFoundException(msg);
+}
 
 // Register BookstoreContext with Entity Framework Core using the SQLite provider.
-// AddDbContext makes it available for constructor injection throughout the app.
 builder.Services.AddDbContext<BookstoreContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
