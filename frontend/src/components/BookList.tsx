@@ -23,6 +23,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Book, BooksResponse } from '../types/Book';
 import { useCart } from '../context/CartContext';
+import { API_BASE } from '../config';
 
 /**
  * Shape of location.state passed back from Cart when the user clicks
@@ -132,7 +133,7 @@ export default function BookList(): JSX.Element {
 
   // ── Load categories once on mount ─────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/books/categories')
+    fetch(`${API_BASE}/books/categories`)
       .then((res) => res.json() as Promise<string[]>)
       .then(setCategories)
       .catch(() => {/* silently ignore — categories are non-critical */});
@@ -151,7 +152,7 @@ export default function BookList(): JSX.Element {
     });
     if (selectedCategory) params.set('category', selectedCategory);
 
-    fetch(`/api/books?${params.toString()}`)
+  fetch(`${API_BASE}/books?${params.toString()}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         return res.json() as Promise<BooksResponse>;
