@@ -16,8 +16,9 @@
  *  DELETE /api/books/{id}                     — delete book
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Book, BooksResponse } from '../types/Book';
+import { API_BASE } from '../config';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ export default function AdminBooks(): JSX.Element {
 
   // ── Load categories once on mount ────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/books/categories')
+    fetch(`${API_BASE}/books/categories`)
       .then((res) => res.json() as Promise<string[]>)
       .then((cats) => {
         setCategories(cats);
@@ -98,17 +99,13 @@ export default function AdminBooks(): JSX.Element {
   }, []);
 
   // ── Fetch the current page of books ──────────────────────────────────────────
-  // Runs on mount and whenever currentPage changes.
-  useEffect(() => {
-    fetchBooks();
-  }, [currentPage]);
-
-  /** Fetches the current page and updates list state. */
-  function fetchBooks() {
+  // useCallback keeps the function reference stable so it can safely appear in
+  // the useEffect dependency array without causing an infinite re-render loop.
+  const fetchBooks = useCallback(() => {
     setLoading(true);
     setListError(null);
 
-    fetch(`/api/books?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
+  fetch(`${API_BASE}/books?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         return res.json() as Promise<BooksResponse>;
@@ -123,7 +120,12 @@ export default function AdminBooks(): JSX.Element {
         setListError(err.message);
         setLoading(false);
       });
-  }
+  }, [currentPage, pageSize]); // re-create only when page or size changes
+
+  // Runs on mount and whenever currentPage changes (or fetchBooks ref updates).
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
 
   // ── Modal helpers ─────────────────────────────────────────────────────────────
 
@@ -187,12 +189,17 @@ export default function AdminBooks(): JSX.Element {
     if (!form.publisher.trim())   return setFormError('Publisher is required.');
     if (!form.isbn.trim())        return setFormError('ISBN is required.');
     if (!form.category.trim())    return setFormError('Category is required.');
-    const pageCount = parseInt(form.pageCount, 10);
-    if (isNaN(pageCount) || pageCount <= 0)
-      return setFormError('Page count must be a positive number.');
-    const price = parseFloat(form.price);
-    if (isNaN(price) || price < 0)
-      return setFormError('Price must be a valid non-negative number.');
+    // Page count: must be a whole positive number — reject decimals like "1.5".
+    const pageCountRaw = form.pageCount.trim();
+    const pageCount = parseInt(pageCountRaw, 10);
+    if (isNaN(pageCount) || pageCount <= 0 || String(pageCount) !== pageCountRaw)
+      return setFormError('Page count must be a positive whole number (e.g. 320).');
+
+    // Price: must be a non-negative number — reject scientific notation like "1e5".
+    const priceRaw = form.price.trim();
+    const price = parseFloat(priceRaw);
+    if (isNaN(price) || price < 0 || !/^\d+(\.\d{1,2})?$/.test(priceRaw))
+      return setFormError('Price must be a valid dollar amount (e.g. 12.99).');
 
     setSaving(true);
     setFormError(null);
@@ -211,7 +218,7 @@ export default function AdminBooks(): JSX.Element {
     };
 
     // Choose POST for new books, PUT for edits.
-    const url    = editingBook ? `/api/books/${editingBook.bookID}` : '/api/books';
+  const url    = editingBook ? `${API_BASE}/books/${editingBook.bookID}` : `${API_BASE}/books`;
     const method = editingBook ? 'PUT' : 'POST';
 
     try {
@@ -248,7 +255,7 @@ export default function AdminBooks(): JSX.Element {
     if (!deletingBook) return;
 
     try {
-      const res = await fetch(`/api/books/${deletingBook.bookID}`, {
+  const res = await fetch(`${API_BASE}/books/${deletingBook.bookID}`, {
         method: 'DELETE',
       });
 
@@ -349,9 +356,14 @@ export default function AdminBooks(): JSX.Element {
           {/* ── Pagination ────────────────────────────────────────────────── */}
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <p className="text-muted mb-0 small">
-              Page {currentPage} of {totalPages} &mdash; showing{' '}
-              {Math.min((currentPage - 1) * pageSize + 1, totalBooks)}–
-              {Math.min(currentPage * pageSize, totalBooks)} of {totalBooks}
+              {totalBooks === 0
+                ? 'No books found.'
+                : <>
+                    Page {currentPage} of {totalPages} &mdash; showing{' '}
+                    {(currentPage - 1) * pageSize + 1}–
+                    {Math.min(currentPage * pageSize, totalBooks)} of {totalBooks}
+                  </>
+              }
             </p>
             <nav aria-label="Admin book pagination">
               <ul className="pagination pagination-sm mb-0">
