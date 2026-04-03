@@ -42,15 +42,15 @@ else
 builder.Services.AddDbContext<BookstoreContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
-// CORS (Cross-Origin Resource Sharing) policy.
-// Browsers block requests from one origin (e.g. localhost:5173) to another
-// (e.g. localhost:5000) by default. This tells the browser our API allows it.
+// CORS — allow Vite dev + deployed Azure Static Web App to call this API.
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173") // Vite dev server origin
+            .WithOrigins(
+                "http://localhost:5173",
+                "https://lemon-hill-07f449803.1.azurestaticapps.net")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
