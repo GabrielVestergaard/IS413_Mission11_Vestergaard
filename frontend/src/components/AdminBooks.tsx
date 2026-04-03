@@ -20,6 +20,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Book, BooksResponse } from '../types/Book';
 import { API_BASE } from '../config';
 
+/** Same as BookList: `/api/books` locally, full `…/api/books` in production. */
+const BOOKS_API = `${API_BASE}/books`;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -88,7 +91,7 @@ export default function AdminBooks(): JSX.Element {
 
   // ── Load categories once on mount ────────────────────────────────────────────
   useEffect(() => {
-  fetch(`${API_BASE}/categories`)
+  fetch(`${BOOKS_API}/categories`)
       .then((res) => res.json() as Promise<string[]>)
       .then((cats) => {
         setCategories(cats);
@@ -105,7 +108,7 @@ export default function AdminBooks(): JSX.Element {
     setLoading(true);
     setListError(null);
 
-  fetch(`${API_BASE}?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
+  fetch(`${BOOKS_API}?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         return res.json() as Promise<BooksResponse>;
@@ -218,7 +221,7 @@ export default function AdminBooks(): JSX.Element {
     };
 
     // Choose POST for new books, PUT for edits.
-  const url    = editingBook ? `${API_BASE}/${editingBook.bookID}` : `${API_BASE}`;
+  const url    = editingBook ? `${BOOKS_API}/${editingBook.bookID}` : `${BOOKS_API}`;
     const method = editingBook ? 'PUT' : 'POST';
 
     try {
@@ -255,7 +258,7 @@ export default function AdminBooks(): JSX.Element {
     if (!deletingBook) return;
 
     try {
-  const res = await fetch(`${API_BASE}/${deletingBook.bookID}`, {
+  const res = await fetch(`${BOOKS_API}/${deletingBook.bookID}`, {
         method: 'DELETE',
       });
 

@@ -144,7 +144,7 @@ export default function BookList(): JSX.Element {
     setLoading(true);
     setError(null);
 
-    // Build the URL. The Vite proxy forwards /api/* to http://localhost:5000.
+    // Build the URL. `API_BASE` is `/api` in dev (Vite proxy → localhost:5000) or your deployed API root.
     const params = new URLSearchParams({
       page: String(currentPage),
       pageSize: String(pageSize),
