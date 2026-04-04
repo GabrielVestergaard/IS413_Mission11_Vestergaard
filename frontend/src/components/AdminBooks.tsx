@@ -20,6 +20,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Book, BooksResponse } from '../types/Book';
 import { API_BASE } from '../config';
 
+// API_BASE = ".../api"  — all book endpoints live under ".../api/books"
+const BOOKS_API = `${API_BASE}/books`;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface BookForm {
@@ -68,7 +71,7 @@ export default function AdminBooks(): JSX.Element {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/categories`)
+    fetch(`${BOOKS_API}/categories`)
       .then((res) => res.json() as Promise<string[]>)
       .then((cats) => {
         setCategories(cats);
@@ -80,7 +83,7 @@ export default function AdminBooks(): JSX.Element {
   const fetchBooks = useCallback(() => {
     setLoading(true);
     setListError(null);
-    fetch(`${API_BASE}?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
+    fetch(`${BOOKS_API}?page=${currentPage}&pageSize=${pageSize}&sortBy=title`)
       .then((res) => {
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         return res.json() as Promise<BooksResponse>;
@@ -171,7 +174,7 @@ export default function AdminBooks(): JSX.Element {
       price,
     };
 
-    const url    = editingBook ? `${API_BASE}/${editingBook.bookID}` : `${API_BASE}`;
+    const url    = editingBook ? `${BOOKS_API}/${editingBook.bookID}` : `${BOOKS_API}`;
     const method = editingBook ? 'PUT' : 'POST';
 
     try {
@@ -203,7 +206,7 @@ export default function AdminBooks(): JSX.Element {
     if (!deletingBook) return;
 
     try {
-      const res = await fetch(`${API_BASE}/${deletingBook.bookID}`, {
+      const res = await fetch(`${BOOKS_API}/${deletingBook.bookID}`, {
         method: 'DELETE',
       });
 
