@@ -14,6 +14,7 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { CartProvider, useCart } from './context/CartContext';
 import BookList from './components/BookList';
 import Cart from './components/Cart';
+import AdminBooks from './components/AdminBooks';
 
 // ── Inner layout component ───────────────────────────────────────────────────
 // Separated from App so it can call useCart() (which requires being inside
@@ -35,35 +36,39 @@ function Layout(): JSX.Element {
             📖 Online Bookstore
           </Link>
 
-          {/* Cart: badge shows total line-item count; click forwards browse snapshot */}
-          <button
-            className="btn btn-outline-light btn-sm position-relative"
-            onClick={() =>
-              navigate('/cart', {
-                state: {
-                  returnPage: catalogBrowseState.page,
-                  returnCategory: catalogBrowseState.category,
-                  returnPageSize: catalogBrowseState.pageSize,
-                  returnSortBy: catalogBrowseState.sortBy,
-                },
-              })
-            }
-            aria-label="View shopping cart"
-          >
-            🛒 Cart
-            {totalItems > 0 && (
-              // Bootstrap badge positioned over the cart button.
-              // position-absolute + translate-middle gives the pill badge
-              // the classic "notification bubble" look on the button corner.
-              <span
-                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                style={{ fontSize: '0.65rem' }}
-              >
-                {totalItems}
-                <span className="visually-hidden">items in cart</span>
-              </span>
-            )}
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            {/* Admin link */}
+            <Link className="btn btn-outline-light btn-sm" to="/adminbooks">
+              ⚙️ Admin
+            </Link>
+
+            {/* Cart: badge shows total line-item count; click forwards browse snapshot */}
+            <button
+              className="btn btn-outline-light btn-sm position-relative"
+              onClick={() =>
+                navigate('/cart', {
+                  state: {
+                    returnPage: catalogBrowseState.page,
+                    returnCategory: catalogBrowseState.category,
+                    returnPageSize: catalogBrowseState.pageSize,
+                    returnSortBy: catalogBrowseState.sortBy,
+                  },
+                })
+              }
+              aria-label="View shopping cart"
+            >
+              🛒 Cart
+              {totalItems > 0 && (
+                <span
+                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style={{ fontSize: '0.65rem' }}
+                >
+                  {totalItems}
+                  <span className="visually-hidden">items in cart</span>
+                </span>
+              )}
+            </button>
+          </div>
 
         </div>
       </nav>
@@ -72,6 +77,7 @@ function Layout(): JSX.Element {
       <Routes>
         <Route path="/" element={<BookList />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/adminbooks" element={<AdminBooks />} />
       </Routes>
 
     </div>
